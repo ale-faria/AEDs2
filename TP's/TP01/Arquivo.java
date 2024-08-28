@@ -1,50 +1,46 @@
-import java.io.File;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
-import java.util.Scanner;
 
-public class Arquivo{
-
+public class Arquivo {
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
         String fileName = "valores.txt";
+        int n;
+        double valor;
 
-        try {
-            // Criar um arquivo de texto e abrir para escrita
-            RandomAccessFile file = new RandomAccessFile(fileName, "rw");
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+            // Lendo o número inteiro
+            // System.out.print("Digite a quantidade de valores: ");
+            n = Integer.parseInt(reader.readLine());
 
-            // Ler o número inteiro n
-            int n = scanner.nextInt();
-
-            // Ler n valores reais e escrevê-los no arquivo
-            for (int i = 0; i < n; i++) {
-                double valor = scanner.nextDouble();
-                file.writeDouble(valor);
+            try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(fileName))) {
+                // Lendo valores e escrevendo no arquivo
+                for (int i = 0; i < n; i++) {
+                    valor = Double.parseDouble(reader.readLine());
+                    dos.writeDouble(valor);
+                }
             }
 
-            file.close();
-
-            file = new RandomAccessFile(fileName, "r");
-
-            // Ler os valores de trás para frente
-            for (int i = n - 1; i >= 0; i--) {
-                // Mover o ponteiro de arquivo para a posição do i-ésimo valor
-                file.seek(i * 8); // Cada double ocupa 8 bytes
-                double valor = file.readDouble();
-                System.out.println(valor);
+            try (RandomAccessFile raf = new RandomAccessFile(fileName, "r")) {
+                // Lendo valores do arquivo de trás para frente
+                for (int i = n - 1; i >= 0; i--) {
+                    // Mover o ponteiro de arquivo para a posição do i-ésimo valor
+                    raf.seek(i * Double.BYTES);
+                    valor = raf.readDouble();
+             
+                    if(valor == (int)valor){
+                        System.out.println((int)valor);
+                    } else {
+                        System.out.println(valor);
+                    }
+                    
+                }
             }
-
-            file.close();
-
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            scanner.close();
-            // Apagar o arquivo após o uso (opcional)
-            File fileToDelete = new File(fileName);
-            if (fileToDelete.exists()) {
-                fileToDelete.delete();
-            }
+            System.err.println("Erro ao abrir o arquivo: " + e.getMessage());
         }
     }
 }
