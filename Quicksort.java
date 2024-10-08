@@ -104,6 +104,10 @@ public class Quicksort {
             quicksort(array, i, dir);
         }
     }
+    /*
+    int pivo = array[random.nextInt(dir)];
+    random.nextInt(1000)
+     */
 
     public static void main(String[] args) {
         int tamanho = 10000;
