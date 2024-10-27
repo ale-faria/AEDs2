@@ -1,3 +1,4 @@
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -8,7 +9,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
-class Pokemon{
+class Pokemon {
+
     // Atributos privados
     private int id;
     private int generation;
@@ -23,10 +25,11 @@ class Pokemon{
     private Date captureDate;
 
     // Construtor padrao
-    public Pokemon(){}
+    public Pokemon() {
+    }
 
     // Construtor com parametros 
-    public Pokemon(int id, int generation, String name, String description, List<String> types, List<String> abilities, double weight, double height, int captureRate, boolean isLegendary, Date captureDate ){
+    public Pokemon(int id, int generation, String name, String description, List<String> types, List<String> abilities, double weight, double height, int captureRate, boolean isLegendary, Date captureDate) {
         this.id = id;
         this.generation = generation;
         this.name = name;
@@ -136,19 +139,17 @@ class Pokemon{
         String typesFormat = types.toString().replace("[", "['").replace("]", "']").replace(", ", "', '");
         String abilitiesFormat = abilities.toString().replace("[", "['").replace("]", "']").replace(", ", "', '");
 
-
-        System.out.println("[#" + id + " -> " + name + ": " + description + " - " 
-                        + typesFormat + " - " + abilitiesFormat + " - " + weight + "kg - " 
-                        + height + "m - " + captureRate + "%" + " - " 
-                        + (isLegendary ? "true" : "false") 
-                        + " - " + generation + " gen" + "] - " + dateFormat.format(captureDate));
+        System.out.println("[#" + id + " -> " + name + ": " + description + " - "
+                + typesFormat + " - " + abilitiesFormat + " - " + weight + "kg - "
+                + height + "m - " + captureRate + "%" + " - "
+                + (isLegendary ? "true" : "false")
+                + " - " + generation + " gen" + "] - " + dateFormat.format(captureDate));
     }
 
-    public Pokemon clone(Pokemon pokemon){
+    public Pokemon clone(Pokemon pokemon) {
         return pokemon;
     }
 }
-
 
 class PokemonCSVReader {
 
@@ -156,7 +157,7 @@ class PokemonCSVReader {
     public List<Pokemon> readPokemonCSV(String filePath) {
         List<Pokemon> pokemonList = new ArrayList<>();
         // Define o formato da data
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy"); 
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
@@ -170,8 +171,12 @@ class PokemonCSVReader {
                 String name = values[2];
                 String description = values[3];
                 List<String> types = new ArrayList<>();
-                if (!values[4].isEmpty()) types.add(values[4]);
-                if (!values[5].isEmpty()) types.add(values[5]);
+                if (!values[4].isEmpty()) {
+                    types.add(values[4]);
+                }
+                if (!values[5].isEmpty()) {
+                    types.add(values[5]);
+                }
                 List<String> abilities = parseAbilities(values[6]);
                 double weight = values[7].isEmpty() ? 0 : Double.parseDouble(values[7]);
                 double height = values[8].isEmpty() ? 0 : Double.parseDouble(values[8]);
@@ -222,103 +227,190 @@ class PokemonCSVReader {
     }
 }
 
-public class ListaDePokemon{
-    private Pokemon [] pokeLista;
-    private int n;
+class ListaDePokemon {
 
-    public ListaDePokemon(){}
+    public Pokemon[] pokeLista;
+    public int n;
 
-    public ListaDePokemon(int tamanho){
-        pokeLista = new Pokemon[tamanho];
-        n = 0; 
+    public ListaDePokemon() {
     }
 
-    public void inserirInicio(Pokemon pokemon){
-        if(n >= pokeLista.length){
-            System.out.println("Erro!");
-        }
+    public ListaDePokemon(int tamanho) {
+        pokeLista = new Pokemon[tamanho];
+        n = 0;
+    }
 
-        for(int i = n; i > 0; i--){
-            pokeLista[i] = pokeLista[i-1];
+    public void inserirInicio(Pokemon pokemon) throws Exception {
+        if (n >= pokeLista.length) {
+            throw new Exception("Erro!");
         }
-
+        //levar elementos para o fim do array
+        for (int i = n; i > 0; i--) {
+            pokeLista[i] = pokeLista[i - 1];
+        }
         pokeLista[0] = pokemon;
         n++;
     }
 
-    public void inserir(Pokemon pokemon, int posicao){
-        for(int i = n; i < posicao; i--){
-            pokeLista[i] = pokeLista[i-1];
+    public void inserir(Pokemon pokemon, int pos) throws Exception {
+        if (n >= pokeLista.length || pos < 0 || pos > n) {
+            throw new Exception("Erro!");
         }
-
-        pokeLista[posicao] = pokemon;
+        //levar elementos para o fim do array
+        for (int i = n; i > pos; i--) {
+            pokeLista[i] = pokeLista[i - 1];
+        }
+        pokeLista[pos] = pokemon;
         n++;
     }
 
-    public void inserirFim(Pokemon pokemon){
+    public void inserirFim(Pokemon pokemon) throws Exception {
+        if (n >= pokeLista.length) {
+            throw new Exception("Erro!");
+        }
         pokeLista[n] = pokemon;
         n++;
     }
 
-    public Pokemon removerInicio(){
+    public Pokemon removerInicio() throws Exception {
+        if (n == 0) {
+            throw new Exception("Erro!");
+        }
+
         Pokemon resp = pokeLista[0];
         n--;
 
-        for(int i = 0; i > n; i++){
-            pokeLista[i] = pokeLista[i+1];
+        for (int i = 0; i < n; i++) {
+            pokeLista[i] = pokeLista[i + 1];
         }
 
         return resp;
     }
 
-    public Pokemon remover(Pokemon pokemon, int posicao){
-        
+    public Pokemon remover(int pos) throws Exception {
+        if (n == 0 || pos < 0 || pos >= n) {
+            throw new Exception("Erro!");
+        }
+
+        Pokemon resp = pokeLista[pos];
+        n--;
+
+        for (int i = pos; i < n; i++) {
+            pokeLista[i] = pokeLista[i + 1];
+        }
+
+        return resp;
     }
+
+    public Pokemon removerFim() throws Exception {
+        if (n == 0) {
+            throw new Exception("Erro!");
+        }
+
+        return pokeLista[--n];
+    }
+
 }
 
-public class TP02Q01{
+public class TP03Q01 {
 
-    public static Pokemon procuraPokemonPorId(List<Pokemon> pokemonList, int id){
+    public static Pokemon procuraPokemonPorId(List<Pokemon> pokemonList, int id) {
         int tamanho = pokemonList.size();
         Pokemon pokemon;
-        for(int i = 0; i < tamanho; i++){
+        for (int i = 0; i < tamanho; i++) {
             pokemon = pokemonList.get(i);
-            if(pokemon.getId() == id){
+            if (pokemon.getId() == id) {
                 return pokemon;
             }
         }
 
         return null;
 
-    } 
+    }
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws Exception {
         PokemonCSVReader reader = new PokemonCSVReader();
-        String filePath = "pokemon.csv"; // Caminho para o arquivo CSV
-        //String filePath = "/tmp/pokemon.csv"; // No Verde 
+        //String filePath = "pokemon.csv"; // Caminho para o arquivo CSV
+        String filePath = "/tmp/pokemon.csv"; // No Verde 
 
         List<Pokemon> pokemonList = reader.readPokemonCSV(filePath);
+        Pokemon[] poke = new Pokemon[100];
+        ListaDePokemon lista = new ListaDePokemon(100);
 
         Scanner sc = new Scanner(System.in);
         String entrada;
 
-        while(sc.hasNext()){
+        int position = 0;
+
+        while (sc.hasNext()) {
             entrada = sc.next();
 
-            if(entrada.equals("FIM")){
+            if (entrada.equals("FIM")) {
                 break;
             }
 
             int id = Integer.parseInt(entrada);
             Pokemon pokemon = procuraPokemonPorId(pokemonList, id);
+            poke[position] = pokemon;
+            position++;
 
-            if(pokemon != null){
-                pokemon.imprimir();
+            if (pokemon != null) {
+                lista.inserirFim(pokemon);
             }
-
         }
 
+        // Processar comandos de inserção e remoção
+        int quantidade = sc.nextInt(); // Quantidade de comandos a processar
+        sc.nextLine();  // Consumir o restante da linha
 
-        
+        for(int i = 0; i < quantidade; i++) {
+            String comando = sc.next(); // Ler comando
+            int id, posicao;
+            Pokemon pokemon;
+
+            switch (comando) {
+                case "II":
+                    id = sc.nextInt();
+                    pokemon = procuraPokemonPorId(pokemonList, id);
+                    lista.inserirInicio(pokemon);
+                    break;
+
+                case "I*":
+                    posicao = sc.nextInt();
+                    id = sc.nextInt();
+                    pokemon = procuraPokemonPorId(pokemonList, id);
+                    lista.inserir(pokemon, posicao);
+                    break;
+
+                case "IF":
+                    id = sc.nextInt();
+                    pokemon = procuraPokemonPorId(pokemonList, id);
+                    lista.inserirFim(pokemon);
+                    break;
+
+                case "RI":
+                    Pokemon removidoInicio = lista.removerInicio();
+                    System.out.println("(R) " + removidoInicio.getName());
+                    break;
+
+                case "R*":
+                    posicao = sc.nextInt();
+                    Pokemon removidoPosicao = lista.remover(posicao);
+                    System.out.println("(R) " + removidoPosicao.getName());
+                    break;
+
+                case "RF":
+                    Pokemon removidoFim = lista.removerFim();
+                    System.out.println("(R) " + removidoFim.getName());
+                    break;
+            }
+        }
+
+        // Exibir lista final de Pokemons apos as operacoes
+        for (int i = 0; i < lista.n; i++) {
+            lista.pokeLista[i].imprimir();
+        }
+
+        sc.close();
     }
 }
