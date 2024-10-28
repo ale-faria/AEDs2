@@ -1,38 +1,41 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
+#include <stdbool.h>
 
-int verificaFim(char *frase){
-    if(frase[0] != 'F' && frase[1] != 'I' && frase[0] != 'M'){
-        return 1;
-    } else {
-        return 0;
+bool verificaFim(char frase[]){
+    if(strcmp(frase, "FIM") == 0){
+        return false;
     }
+    return true;
 }
 
-int ehPalindromo(char *frase){
-    int tamanho = strlen(frase);
-    for(int i = 0; i < tamanho/2; i++){
-        if(frase[i] != frase[tamanho-1-i]){
-            return 0;
+bool ehPalindromo(char frase[], int inicio, int fim){
+
+    while(inicio < fim){
+        if(frase[inicio] != frase[fim]){
+            return false;
         }
+        inicio++;
+        fim--;
     }
-    return 1;
+
+    return true;
 }
 
 int main(void){
-    char frase[100];
-    fgets(frase, sizeof(frase), stdin);
+    char frase[500];
+    fgets(frase, 500, stdin);
     //remove o \n do final da string e coloca \0
     frase[strcspn(frase, "\n")] = '\0';
 
     while(verificaFim(frase)){
-        if(ehPalindromo(frase) == 1){
+        int tamanho = strlen(frase)-1;
+        if(ehPalindromo(frase, 0, tamanho)){
             printf("SIM\n");
         } else {
             printf("NAO\n");
         }
-        fgets(frase, sizeof(frase), stdin);
+        fgets(frase, 500, stdin);
         frase[strcspn(frase, "\n")] = '\0';
     }
 
