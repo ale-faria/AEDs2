@@ -46,6 +46,12 @@ typedef struct {
     int size;
 } PokemonList;
 
+/*
+----------------------------------------------------------
+INICIO LISTA
+----------------------------------------------------------
+*/
+
 typedef struct {
     Pokemon* pokeLista[MAX_TAMANHO];
     int n;
@@ -55,6 +61,93 @@ typedef struct {
 void inicializarLista(ListaDePokemon* lista) {
     lista->n = 0;
 }
+
+// Funcoes para inserir um Pokemon na lista
+void inserirInicio(ListaDePokemon* lista, Pokemon* pokemon) {
+    if (lista->n >= MAX_TAMANHO) {
+        printf("Erro: Lista cheia!\n");
+        return;
+    }
+
+    for (int i = lista->n; i > 0; i--) {
+        lista->pokeLista[i] = lista->pokeLista[i - 1];
+    }
+
+    lista->pokeLista[0] = pokemon;
+    lista->n++;
+}
+
+void inserirPosicao(ListaDePokemon* lista, Pokemon* pokemon, int pos) {
+    if (lista->n >= MAX_TAMANHO || pos < 0 || pos > lista->n) {
+        printf("Erro: Posicao invalida!\n");
+        return;
+    }
+
+    for (int i = lista->n; i > pos; i--) {
+        lista->pokeLista[i] = lista->pokeLista[i - 1];
+    }
+
+    lista->pokeLista[pos] = pokemon;
+    lista->n++;
+}
+
+void inserirFim(ListaDePokemon* lista, Pokemon* pokemon) {
+    if (lista->n >= MAX_TAMANHO) {
+        printf("Erro: Lista cheia!\n");
+        return;
+    }
+
+    lista->pokeLista[lista->n] = pokemon;
+    lista->n++;
+}
+
+// Funcoes para remover um Pokemon da lista
+Pokemon* removerInicio(ListaDePokemon* lista) {
+    if (lista->n == 0) {
+        printf("Erro: Lista vazia!\n");
+        return NULL;
+    }
+
+    Pokemon* removido = lista->pokeLista[0];
+    lista->n--;
+
+    for (int i = 0; i < lista->n; i++) {
+        lista->pokeLista[i] = lista->pokeLista[i + 1];
+    }
+
+    return removido;
+}
+
+Pokemon* removerPosicao(ListaDePokemon* lista, int pos) {
+    if (lista->n == 0 || pos < 0 || pos >= lista->n) {
+        printf("Erro: Posicao invalida!\n");
+        return NULL;
+    }
+
+    Pokemon* removido = lista->pokeLista[pos];
+    lista->n--;
+
+    for (int i = pos; i < lista->n; i++) {
+        lista->pokeLista[i] = lista->pokeLista[i + 1];
+    }
+
+    return removido;
+}
+
+Pokemon* removerFim(ListaDePokemon* lista) {
+    if (lista->n == 0) {
+        printf("Erro: Lista vazia!\n");
+        return NULL;
+    }
+
+    return lista->pokeLista[--lista->n];
+}
+
+/*
+----------------------------------------------------------
+FIM LISTA
+----------------------------------------------------------
+*/
 
 void imprimirPokemon(Pokemon *pokemon) {
 
@@ -202,16 +295,10 @@ Pokemon *procuraPokemonPorId(PokemonList *pokemonList, int id) {
     return NULL;
 }
 
-void swap(Pokemon poke[], int i, int j) {
-        Pokemon temp = poke[i];
-        poke[i] = poke[j];
-        poke[j] = temp;
-}
-
 int main(void) {
     char *filePath;
-    filePath = "pokemon.csv";
-    //filePath = "/tmp/pokemon.csv"; // Caminho no Verde
+    //filePath = "pokemon.csv";
+    filePath = "/tmp/pokemon.csv"; // Caminho no Verde
 
     PokemonList pokemonList = readPokemonCSV(filePath); // Leitura do arquivo csv
     ListaDePokemon lista;
@@ -244,17 +331,17 @@ int main(void) {
 
         if (strcmp(comando, "II") == 0) {
             scanf("%d", &id);
-            Pokemon* pokemon = procuraPokemonPorId(pokemonList, numPokemons, id);
+            Pokemon* pokemon = procuraPokemonPorId(&pokemonList, id);
             if (pokemon) inserirInicio(&lista, pokemon);
 
         } else if (strcmp(comando, "I*") == 0) {
             scanf("%d %d", &posicao, &id);
-            Pokemon* pokemon = procuraPokemonPorId(pokemonList, numPokemons, id);
+            Pokemon* pokemon = procuraPokemonPorId(&pokemonList, id);
             if (pokemon) inserirPosicao(&lista, pokemon, posicao);
 
         } else if (strcmp(comando, "IF") == 0) {
             scanf("%d", &id);
-            Pokemon* pokemon = procuraPokemonPorId(pokemonList, numPokemons, id);
+            Pokemon* pokemon = procuraPokemonPorId(&pokemonList, id);
             if (pokemon) inserirFim(&lista, pokemon);
 
         } else if (strcmp(comando, "RI") == 0) {
@@ -274,6 +361,7 @@ int main(void) {
 
     // Exibir lista final de Pokemons apos as operacoes
     for (int i = 0; i < lista.n; i++) {
+        printf("[%d] ", i);
         imprimirPokemon(lista.pokeLista[i]);
     }
 
