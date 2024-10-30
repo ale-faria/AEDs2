@@ -38,7 +38,6 @@ typedef struct {
     int captureRate;
     int isLegendary;
     char captureDate[11];
-
 } Pokemon;
 
 typedef struct {
@@ -87,6 +86,16 @@ void empilhar(PilhaDePokemon* pilha, Pokemon* pokemon) {
 
     pilha->pokePilha[pilha->topo++] = pokemon;
 }
+
+// Funcao para desempilhar (remover) um Pokemon
+Pokemon* desempilhar(PilhaDePokemon* pilha) {
+    if (pilhaVazia(pilha)) {
+        printf("Erro: Pilha vazia!\n");
+        return NULL;
+    }
+    return pilha->pokePilha[--pilha->topo];
+}
+
 /*
 ----------------------------------------------------------
 FIM PILHA
@@ -261,7 +270,7 @@ int main(void) {
         int id = atoi(entrada);
         Pokemon *pokemon = procuraPokemonPorId(&pokemonList, id);
         if (pokemon != NULL) {
-            inserirFim(&lista, pokemon);
+            empilhar(&pilha, pokemon);
         }
     }
 
@@ -273,40 +282,21 @@ int main(void) {
         int posicao, id;
         scanf("%s", comando); // Ler comando
 
-        if (strcmp(comando, "II") == 0) {
+        if (strcmp(comando, "I") == 0) {
             scanf("%d", &id);
             Pokemon* pokemon = procuraPokemonPorId(&pokemonList, id);
-            if (pokemon) inserirInicio(&lista, pokemon);
+            if (pokemon) empilhar(&pilha, pokemon);
 
-        } else if (strcmp(comando, "I*") == 0) {
-            scanf("%d %d", &posicao, &id);
-            Pokemon* pokemon = procuraPokemonPorId(&pokemonList, id);
-            if (pokemon) inserirPosicao(&lista, pokemon, posicao);
-
-        } else if (strcmp(comando, "IF") == 0) {
-            scanf("%d", &id);
-            Pokemon* pokemon = procuraPokemonPorId(&pokemonList, id);
-            if (pokemon) inserirFim(&lista, pokemon);
-
-        } else if (strcmp(comando, "RI") == 0) {
-            Pokemon* removido = removerInicio(&lista);
-            if (removido) printf("(R) %s\n", removido->name);
-
-        } else if (strcmp(comando, "R*") == 0) {
-            scanf("%d", &posicao);
-            Pokemon* removido = removerPosicao(&lista, posicao);
-            if (removido) printf("(R) %s\n", removido->name);
-
-        } else if (strcmp(comando, "RF") == 0) {
-            Pokemon* removido = removerFim(&lista);
+        } else if (strcmp(comando, "R") == 0) {
+            Pokemon* removido = desempilhar(&pilha);
             if (removido) printf("(R) %s\n", removido->name);
         }
     }
 
-    // Exibir lista final de Pokemons apos as operacoes
-    for (int i = 0; i < lista.n; i++) {
+    // Exibir pilha final de Pokemons apos as operacoes
+    for (int i = 0; i < pilha.topo; i++) {
         printf("[%d] ", i);
-        imprimirPokemon(lista.pokeLista[i]);
+        imprimirPokemon(pilha.pokePilha[i]);
     }
 
     return 0;
