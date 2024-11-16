@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
-#define MAX_TAMANHO 5
+#define MAX_TAMANHO 100
 
 
 char *strsep(char **stringp, const char *delim) {
@@ -48,81 +47,61 @@ typedef struct {
 
 /*
 ----------------------------------------------------------
-INICIO FILA CIRCULAR
+INICIO PILHA FLEXIVEL
 ----------------------------------------------------------
 */
 
-typedef struct {
-    Pokemon* pokeFilaCircular[MAX_TAMANHO];
-    int primeiro, ultimo;
-    int tamanho; // Contador para o numero de elementos na fila
-} FilaCircularDePokemon;
+typedef struct Celula {
+	Pokemon* elemento;
+	struct Celula* prox;
+} Celula;
 
-// Declaracoes das funcoes
-void inicializarFilaCircular(FilaCircularDePokemon* filaCircular);
-void inserir(FilaCircularDePokemon* fila, Pokemon* pokemon);
-Pokemon* remover(FilaCircularDePokemon* fila);
-int calculaMediaCaptureRate(FilaCircularDePokemon* fila);
-
-// Metodo para inicializar a fila circular
-void inicializarFilaCircular(FilaCircularDePokemon* filaCircular) {
-    filaCircular->primeiro = filaCircular->ultimo = 0;
-    filaCircular->tamanho = 0;
+Celula* novaCelula(Pokemon* elemento) {
+   Celula* nova = (Celula*) malloc(sizeof(Celula));
+   nova->elemento = elemento;
+   nova->prox = NULL;
+   return nova;
 }
 
-// Metodo para inserir um Pokemon na fila circular
-void inserir(FilaCircularDePokemon* fila, Pokemon* pokemon){
-    // Remove um elemento se a fila estiver cheia
-    if (fila->tamanho == MAX_TAMANHO){
-        Pokemon* removido = remover(fila);
-        //if (removido) printf("(R) %s\n", removido->name);
+Celula* topo;
 
-    }
-
-    fila->pokeFilaCircular[fila->ultimo] = pokemon;
-    fila->ultimo = (fila->ultimo + 1) % MAX_TAMANHO;
-    if (fila->tamanho < MAX_TAMANHO) fila->tamanho++;
-
-    printf("M\u00E9dia: %d\n", calculaMediaCaptureRate(fila));
+void start() {
+   topo = NULL;
 }
 
-// Funcao para remover um Pokemon da fila circular
-Pokemon* remover(FilaCircularDePokemon *fila){
-    if (fila->tamanho == 0) {
-        printf("Erro: Fila esta vazia!\n");
-        exit(1);
+// Funcao para empilhar (inserir) um Pokemon - LIFO - Insere no topo
+void inserir(Pokemon* x) {
+   Celula* tmp = novaCelula(x);
+   tmp->prox = topo;
+   topo = tmp;
+   tmp = NULL;
+}
+
+// Funcao para desempilhar (remover) um Pokemon - LIFO - Remove no topo
+Pokemon* remover() {
+    if (topo == NULL){
+        printf("Erro ao remover! A pilha esta vazia.\n");
+        return NULL;
     }
 
-    Pokemon* resp = fila->pokeFilaCircular[fila->primeiro];
-    fila->primeiro = (fila->primeiro + 1) % MAX_TAMANHO;
-    fila->tamanho--;
-    return resp;
+   Pokemon* resp = topo->elemento;
+   Celula* tmp = topo;
+   topo = topo->prox;
+   tmp->prox = NULL;
+   free(tmp);
+   tmp = NULL;
+   return resp;
 }
 
 /*
 ----------------------------------------------------------
-FIM FILA CIRCULAR
+FIM PILHA FLEXIVEL
 ----------------------------------------------------------
 */
 
-// Funcao para calcular a media dos captureRates dos Pokemons na fila
-int calculaMediaCaptureRate(FilaCircularDePokemon* fila){
-    int soma = 0;
-    int resp = 0;
-    for (int i = 0; i < fila->tamanho; i++) {
-        int index = (fila->primeiro + i) % MAX_TAMANHO;
-        soma += fila->pokeFilaCircular[index]->captureRate;
-    }
+void imprimirPokemon(int indice, Pokemon* pokemon) {
 
-    if(fila->tamanho > 0){
-        resp = (int)round((double)soma / fila->tamanho);
-    }
-    return resp;
-}
-
-void imprimirPokemon(Pokemon *pokemon) {
-
-    printf("[#%d -> %s: %s - ['%s'", pokemon->id, pokemon->name, pokemon->description, pokemon->types[0]);
+    printf("[%d] [#%d -> %s: %s - ['%s'", indice, pokemon->id, pokemon->name, pokemon->description, pokemon->types[0]);
 
     // Tipos (types)
     if(pokemon->quantTypes == 2){
@@ -148,6 +127,14 @@ void imprimirPokemon(Pokemon *pokemon) {
 
     printf(" - %.1fkg - %.1fm - %d%% - %s - %d gen] - %s\n", pokemon->weight, pokemon->height, pokemon->captureRate, pokemon->isLegendary ? "true" : "false",
            pokemon->generation, pokemon->captureDate);
+}
+
+// Funcao para imprimir a pilha em ordem inversa (do fundo para o topo)
+void imprimirPilhaAoContrario(Celula* celula, int* indice) {
+    if (celula == NULL) return;
+
+    imprimirPilhaAoContrario(celula->prox, indice);  // Chamada recursiva para o próximo
+    imprimirPokemon((*indice)++, celula->elemento);  // Imprime o elemento com índice atualizado
 }
 
 PokemonList readPokemonCSV(char *filePath) {
@@ -268,12 +255,11 @@ Pokemon *procuraPokemonPorId(PokemonList *pokemonList, int id) {
 
 int main(void) {
     char *filePath;
-    filePath = "pokemon.csv";
-    //filePath = "/tmp/pokemon.csv"; // Caminho no Verde
+    //filePath = "pokemon.csv";
+    filePath = "/tmp/pokemon.csv"; // Caminho no Verde
 
     PokemonList pokemonList = readPokemonCSV(filePath); // Leitura do arquivo csv
-    FilaCircularDePokemon fila;
-    inicializarFilaCircular(&fila);
+    start();
 
     int position = 0;
     char entrada[30];
@@ -288,7 +274,7 @@ int main(void) {
         int id = atoi(entrada);
         Pokemon *pokemon = procuraPokemonPorId(&pokemonList, id);
         if (pokemon != NULL) {
-            inserir(&fila, pokemon);
+            inserir(pokemon);
         }
     }
 
@@ -303,24 +289,25 @@ int main(void) {
         if (strcmp(comando, "I") == 0) {
             scanf("%d", &id);
             Pokemon* pokemon = procuraPokemonPorId(&pokemonList, id);
-            if (pokemon) inserir(&fila, pokemon);
-            // media arredondada do captureRate dos Pokemons contidos na fila no momento
-            //printf("M\u00E9dia: %d\n", calculaMediaCaptureRate(&fila));
+            if (pokemon) inserir(pokemon);
 
         } else if (strcmp(comando, "R") == 0) {
-            Pokemon* removido = remover(&fila);
+            Pokemon* removido = remover();
             if (removido) printf("(R) %s\n", removido->name);
         }
     }
 
-    printf("\n");
+    // Exibir pilha final de Pokemons apos as operacoes
+    //int index = 0;
+    /*for (Celula* i = topo; i != NULL; i = i->prox) {
+        printf("[%d] ", index);
+        imprimirPokemon(i->elemento);
+        index++;
+    }*/ // ??? Nao entendi pq na correcao o print nao comeca pelo topo
 
-    // Exibir fila final de Pokemons apos as operacoes
-    int i = fila.primeiro;
-    for (int i = 0; i < fila.tamanho; i++) {
-        int index = (fila.primeiro + i) % MAX_TAMANHO;
-        printf("[%d] ", i);
-        imprimirPokemon(fila.pokeFilaCircular[index]);
-    }
+    int indice = 0;
+    imprimirPilhaAoContrario(topo, &indice);
+
     return 0;
 }
+

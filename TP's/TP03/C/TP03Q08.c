@@ -48,77 +48,146 @@ typedef struct {
 
 /*
 ----------------------------------------------------------
-INICIO FILA CIRCULAR
+INICIO LISTA DUPLAMENTE ENCADEADA
 ----------------------------------------------------------
 */
 
-typedef struct {
-    Pokemon* pokeFilaCircular[MAX_TAMANHO];
-    int primeiro, ultimo;
-    int tamanho; // Contador para o numero de elementos na fila
-} FilaCircularDePokemon;
+typedef struct CelulaDupla{
+    Pokemon* elemento;
+    struct CelulaDupla* prox;
+    struct CelulaDupla* ant;
+} CelulaDupla;
 
-// Declaracoes das funcoes
-void inicializarFilaCircular(FilaCircularDePokemon* filaCircular);
-void inserir(FilaCircularDePokemon* fila, Pokemon* pokemon);
-Pokemon* remover(FilaCircularDePokemon* fila);
-int calculaMediaCaptureRate(FilaCircularDePokemon* fila);
-
-// Metodo para inicializar a fila circular
-void inicializarFilaCircular(FilaCircularDePokemon* filaCircular) {
-    filaCircular->primeiro = filaCircular->ultimo = 0;
-    filaCircular->tamanho = 0;
+CelulaDupla* novaCelulaDupla(Pokemon* elemento) {
+   CelulaDupla* nova = (CelulaDupla*) malloc(sizeof(CelulaDupla));
+   nova->elemento = elemento;
+   nova->ant = nova->prox = NULL;
+   return nova;
 }
 
-// Metodo para inserir um Pokemon na fila circular
-void inserir(FilaCircularDePokemon* fila, Pokemon* pokemon){
-    // Remove um elemento se a fila estiver cheia
-    if (fila->tamanho == MAX_TAMANHO){
-        Pokemon* removido = remover(fila);
-        //if (removido) printf("(R) %s\n", removido->name);
+CelulaDupla* primeiro;
+CelulaDupla* ultimo;
 
-    }
-
-    fila->pokeFilaCircular[fila->ultimo] = pokemon;
-    fila->ultimo = (fila->ultimo + 1) % MAX_TAMANHO;
-    if (fila->tamanho < MAX_TAMANHO) fila->tamanho++;
-
-    printf("M\u00E9dia: %d\n", calculaMediaCaptureRate(fila));
+void start() {
+   primeiro = novaCelulaDupla(NULL);
+   ultimo = primeiro;
 }
 
-// Funcao para remover um Pokemon da fila circular
-Pokemon* remover(FilaCircularDePokemon *fila){
-    if (fila->tamanho == 0) {
-        printf("Erro: Fila esta vazia!\n");
-        exit(1);
-    }
+void inserirInicio(Pokemon* x) {
+   CelulaDupla* tmp = novaCelulaDupla(x);
 
-    Pokemon* resp = fila->pokeFilaCircular[fila->primeiro];
-    fila->primeiro = (fila->primeiro + 1) % MAX_TAMANHO;
-    fila->tamanho--;
-    return resp;
+   tmp->ant = primeiro;
+   tmp->prox = primeiro->prox;
+   primeiro->prox = tmp;
+   if (primeiro == ultimo) {
+      ultimo = tmp;
+   } else {
+      tmp->prox->ant = tmp;
+   }
+   tmp = NULL;
 }
 
+void inserirFim(Pokemon* x) {
+   ultimo->prox = novaCelulaDupla(x);
+   ultimo->prox->ant = ultimo;
+   ultimo = ultimo->prox;
+}
+
+Pokemon* removerInicio() {
+   if (primeiro == ultimo) {
+      printf("Erro ao remover (vazia)!");
+      return NULL;
+   }
+
+   CelulaDupla* tmp = primeiro;
+   primeiro = primeiro->prox;
+   Pokemon* resp = primeiro->elemento;
+   tmp->prox = primeiro->ant = NULL;
+   free(tmp);
+   tmp = NULL;
+   return resp;
+}
+
+Pokemon* removerFim() {
+   if (primeiro == ultimo) {
+      printf("Erro ao remover (vazia)!");
+      return NULL;
+   }
+   Pokemon* resp = ultimo->elemento;
+   ultimo = ultimo->ant;
+   ultimo->prox->ant = NULL;
+   free(ultimo->prox);
+   ultimo->prox = NULL;
+   return resp;
+}
+
+int tamanho() {
+   int tamanho = 0;
+   CelulaDupla* i;
+   for(i = primeiro; i != ultimo; i = i->prox, tamanho++);
+   return tamanho;
+}
+
+void inserir(Pokemon* x, int pos) {
+
+   int tam = tamanho();
+
+   if(pos < 0 || pos > tam){
+      printf("Erro ao remover (posicao %d/%d invalida!", pos, tam);
+      return;
+   } else if (pos == 0){
+      inserirInicio(x);
+   } else if (pos == tam){
+      inserirFim(x);
+   } else {
+      // Caminhar ate a posicao anterior a insercao
+      CelulaDupla* i = primeiro;
+      int j;
+      for(j = 0; j < pos; j++, i = i->prox);
+
+      CelulaDupla* tmp = novaCelulaDupla(x);
+      tmp->ant = i;
+      tmp->prox = i->prox;
+      tmp->ant->prox = tmp->prox->ant = tmp;
+      tmp = i = NULL;
+   }
+}
+
+Pokemon* remover(int pos) {
+   Pokemon* resp;
+   int tam = tamanho();
+
+   if (primeiro == ultimo){
+      printf("Erro ao remover (vazia)!");
+      return NULL;
+   } else if(pos < 0 || pos >= tam){
+      printf("Erro ao remover (posicao %d/%d invalida!", pos, tam);
+      return NULL;
+   } else if (pos == 0){
+      resp = removerInicio();
+   } else if (pos == tam - 1){
+      resp = removerFim();
+   } else {
+      // Caminhar ate a posicao anterior a insercao
+      CelulaDupla* i = primeiro->prox;
+      int j;
+      for(j = 0; j < pos; j++, i = i->prox);
+
+      i->ant->prox = i->prox;
+      i->prox->ant = i->ant;
+      resp = i->elemento;
+      i->prox = i->ant = NULL;
+      free(i);
+      i = NULL;
+   }
+
+   return resp;
+}
 /*
 ----------------------------------------------------------
-FIM FILA CIRCULAR
+FIM LISTA DUPLAMENTE ENCADEADA
 ----------------------------------------------------------
 */
-
-// Funcao para calcular a media dos captureRates dos Pokemons na fila
-int calculaMediaCaptureRate(FilaCircularDePokemon* fila){
-    int soma = 0;
-    int resp = 0;
-    for (int i = 0; i < fila->tamanho; i++) {
-        int index = (fila->primeiro + i) % MAX_TAMANHO;
-        soma += fila->pokeFilaCircular[index]->captureRate;
-    }
-
-    if(fila->tamanho > 0){
-        resp = (int)round((double)soma / fila->tamanho);
-    }
-    return resp;
-}
 
 void imprimirPokemon(Pokemon *pokemon) {
 
@@ -266,14 +335,56 @@ Pokemon *procuraPokemonPorId(PokemonList *pokemonList, int id) {
     return NULL;
 }
 
+// Funcao para particionar a lista duplamente encadeada
+CelulaDupla* particionar(CelulaDupla* inicio, CelulaDupla* fim) {
+    Pokemon* pivo = fim->elemento; // Escolhemos o pivo como o elemento no final
+    CelulaDupla* i = inicio->ant; // Menor parte da lista
+
+    for (CelulaDupla* j = inicio; j != fim; j = j->prox) {
+        // Comparacao por geracao e, em caso de empate, por nome
+        if ((j->elemento->generation < pivo->generation) ||
+            (j->elemento->generation == pivo->generation &&
+             strcmp(j->elemento->name, pivo->name) < 0)) {
+            i = (i == NULL) ? inicio : i->prox; // Avanca o menor
+            Pokemon* temp = i->elemento;
+            i->elemento = j->elemento;
+            j->elemento = temp; // Troca elementos
+        }
+    }
+
+    i = (i == NULL) ? inicio : i->prox; // Posiciona o pivo
+    Pokemon* temp = i->elemento;
+    i->elemento = fim->elemento;
+    fim->elemento = temp;
+
+    return i; // Retorna a celula do pivo
+}
+
+// Funcao recursiva do quicksort para listas duplamente encadeadas
+void quicksortLista(CelulaDupla* inicio, CelulaDupla* fim) {
+    if (inicio != NULL && fim != NULL && inicio != fim && inicio != fim->prox) {
+        CelulaDupla* pivo = particionar(inicio, fim);
+        quicksortLista(inicio, pivo->ant); // Ordena a parte a esquerda do pivo
+        quicksortLista(pivo->prox, fim);  // Ordena a parte a direita do pivo
+    }
+}
+
+// Funcao auxiliar para encontrar a ultima celula da lista
+CelulaDupla* encontrarUltimo(CelulaDupla* inicio) {
+    CelulaDupla* atual = inicio;
+    while (atual->prox != NULL) {
+        atual = atual->prox;
+    }
+    return atual;
+}
+
 int main(void) {
     char *filePath;
-    filePath = "pokemon.csv";
-    //filePath = "/tmp/pokemon.csv"; // Caminho no Verde
+    //filePath = "pokemon.csv";
+    filePath = "/tmp/pokemon.csv"; // Caminho no Verde
 
     PokemonList pokemonList = readPokemonCSV(filePath); // Leitura do arquivo csv
-    FilaCircularDePokemon fila;
-    inicializarFilaCircular(&fila);
+    start();
 
     int position = 0;
     char entrada[30];
@@ -288,39 +399,18 @@ int main(void) {
         int id = atoi(entrada);
         Pokemon *pokemon = procuraPokemonPorId(&pokemonList, id);
         if (pokemon != NULL) {
-            inserir(&fila, pokemon);
+            inserirFim(pokemon);
         }
     }
 
-    int numComandos; // Quantidade de comandos a processar
-    scanf("%d", &numComandos);
+    // Ordena a lista duplamente encadeada
+    CelulaDupla* fim = encontrarUltimo(primeiro->prox);
+    quicksortLista(primeiro->prox, fim);
 
-    for (int i = 0; i < numComandos; i++) {
-        char comando[3];
-        int posicao, id;
-        scanf("%s", comando); // Ler comando
-
-        if (strcmp(comando, "I") == 0) {
-            scanf("%d", &id);
-            Pokemon* pokemon = procuraPokemonPorId(&pokemonList, id);
-            if (pokemon) inserir(&fila, pokemon);
-            // media arredondada do captureRate dos Pokemons contidos na fila no momento
-            //printf("M\u00E9dia: %d\n", calculaMediaCaptureRate(&fila));
-
-        } else if (strcmp(comando, "R") == 0) {
-            Pokemon* removido = remover(&fila);
-            if (removido) printf("(R) %s\n", removido->name);
-        }
+    // Imprime a lista ordenada
+    for (CelulaDupla* i = primeiro->prox; i != NULL; i = i->prox) {
+        imprimirPokemon(i->elemento);
     }
 
-    printf("\n");
-
-    // Exibir fila final de Pokemons apos as operacoes
-    int i = fila.primeiro;
-    for (int i = 0; i < fila.tamanho; i++) {
-        int index = (fila.primeiro + i) % MAX_TAMANHO;
-        printf("[%d] ", i);
-        imprimirPokemon(fila.pokeFilaCircular[index]);
-    }
     return 0;
 }

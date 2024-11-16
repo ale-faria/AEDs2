@@ -48,60 +48,84 @@ typedef struct {
 
 /*
 ----------------------------------------------------------
-INICIO FILA CIRCULAR
+INICIO FILA CIRCULAR FLEXIVEL
 ----------------------------------------------------------
 */
 
+typedef struct Celula {
+    Pokemon* elemento;
+    struct Celula* prox;
+} Celula;
+
 typedef struct {
-    Pokemon* pokeFilaCircular[MAX_TAMANHO];
-    int primeiro, ultimo;
+    Celula* primeiro;
+    Celula* ultimo;
     int tamanho; // Contador para o numero de elementos na fila
 } FilaCircularDePokemon;
 
+Celula* novaCelula(Pokemon* elemento) {
+    Celula* nova = (Celula*)malloc(sizeof(Celula));
+    nova->elemento = elemento;
+    nova->prox = NULL;
+    return nova;
+}
+
 // Declaracoes das funcoes
-void inicializarFilaCircular(FilaCircularDePokemon* filaCircular);
-void inserir(FilaCircularDePokemon* fila, Pokemon* pokemon);
 Pokemon* remover(FilaCircularDePokemon* fila);
 int calculaMediaCaptureRate(FilaCircularDePokemon* fila);
 
 // Metodo para inicializar a fila circular
-void inicializarFilaCircular(FilaCircularDePokemon* filaCircular) {
-    filaCircular->primeiro = filaCircular->ultimo = 0;
-    filaCircular->tamanho = 0;
+void inicializarFilaCircular(FilaCircularDePokemon* fila) {
+    fila->primeiro = fila->ultimo = NULL;
+    fila->tamanho = 0;
 }
 
 // Metodo para inserir um Pokemon na fila circular
-void inserir(FilaCircularDePokemon* fila, Pokemon* pokemon){
-    // Remove um elemento se a fila estiver cheia
-    if (fila->tamanho == MAX_TAMANHO){
-        Pokemon* removido = remover(fila);
-        //if (removido) printf("(R) %s\n", removido->name);
+void inserir(FilaCircularDePokemon* fila, Pokemon* pokemon) {
+    Celula* nova = novaCelula(pokemon);
 
+    if (fila->tamanho == MAX_TAMANHO) {
+        remover(fila); // Remove o fila estiver cheia
     }
 
-    fila->pokeFilaCircular[fila->ultimo] = pokemon;
-    fila->ultimo = (fila->ultimo + 1) % MAX_TAMANHO;
-    if (fila->tamanho < MAX_TAMANHO) fila->tamanho++;
+    if (fila->tamanho == 0) {
+        fila->primeiro = fila->ultimo = nova;
+        fila->ultimo->prox = fila->primeiro; // Liga o ultimo ao primeiro
+    } else {
+        fila->ultimo->prox = nova;
+        fila->ultimo = nova;
+        fila->ultimo->prox = fila->primeiro; // Mantem a circularidade
+    }
 
+    fila->tamanho++;
     printf("M\u00E9dia: %d\n", calculaMediaCaptureRate(fila));
 }
 
 // Funcao para remover um Pokemon da fila circular
-Pokemon* remover(FilaCircularDePokemon *fila){
+Pokemon* remover(FilaCircularDePokemon* fila) {
     if (fila->tamanho == 0) {
         printf("Erro: Fila esta vazia!\n");
         exit(1);
     }
 
-    Pokemon* resp = fila->pokeFilaCircular[fila->primeiro];
-    fila->primeiro = (fila->primeiro + 1) % MAX_TAMANHO;
+    Celula* tmp = fila->primeiro;
+    Pokemon* resp = tmp->elemento;
+
+    if (fila->tamanho == 1) {
+        fila->primeiro = fila->ultimo = NULL;
+    } else {
+        fila->primeiro = fila->primeiro->prox;
+        fila->ultimo->prox = fila->primeiro; // Mantem a circularidade
+    }
+
+    free(tmp);
     fila->tamanho--;
     return resp;
 }
 
 /*
 ----------------------------------------------------------
-FIM FILA CIRCULAR
+FIM FILA CIRCULAR FLEXIVEL
 ----------------------------------------------------------
 */
 
@@ -109,9 +133,9 @@ FIM FILA CIRCULAR
 int calculaMediaCaptureRate(FilaCircularDePokemon* fila){
     int soma = 0;
     int resp = 0;
-    for (int i = 0; i < fila->tamanho; i++) {
-        int index = (fila->primeiro + i) % MAX_TAMANHO;
-        soma += fila->pokeFilaCircular[index]->captureRate;
+    int cont = 0;
+    for (Celula* atual = fila->primeiro; cont < fila->tamanho; atual = atual->prox, cont++) {
+       soma += atual->elemento->captureRate;
     }
 
     if(fila->tamanho > 0){
@@ -268,8 +292,8 @@ Pokemon *procuraPokemonPorId(PokemonList *pokemonList, int id) {
 
 int main(void) {
     char *filePath;
-    filePath = "pokemon.csv";
-    //filePath = "/tmp/pokemon.csv"; // Caminho no Verde
+    //filePath = "pokemon.csv";
+    filePath = "/tmp/pokemon.csv"; // Caminho no Verde
 
     PokemonList pokemonList = readPokemonCSV(filePath); // Leitura do arquivo csv
     FilaCircularDePokemon fila;
@@ -316,11 +340,12 @@ int main(void) {
     printf("\n");
 
     // Exibir fila final de Pokemons apos as operacoes
-    int i = fila.primeiro;
-    for (int i = 0; i < fila.tamanho; i++) {
-        int index = (fila.primeiro + i) % MAX_TAMANHO;
+    Celula* atual = fila.primeiro;
+    for (int i = 0; i < fila.tamanho;i++) {
         printf("[%d] ", i);
-        imprimirPokemon(fila.pokeFilaCircular[index]);
+        imprimirPokemon(atual->elemento);
+        atual = atual->prox;
     }
+
     return 0;
 }
